@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Какой у тебя уровень работы с ИИ?</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700;900&family=PT+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --gold: #C9A84C;
+  --gold-light: rgba(201,168,76,.15);
+  --gold-border: rgba(201,168,76,.35);
+  --bg: #111;
+  --text: #fff;
+  --text-muted: rgba(255,255,255,.6);
+  --card-bg: rgba(255,255,255,.93);
+  --red: #e53935;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'PT Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  position: relative;
+  overflow-x: hidden;
+  font-size: 18px;
+}
+
+/* Фоновые эффекты */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 600px 300px at 80% 10%, rgba(255,90,70,.12) 0%, transparent 60%),
+    radial-gradient(ellipse 400px 200px at 10% 80%, rgba(60,100,255,.08) 0%, transparent 55%),
+    radial-gradient(ellipse 300px 150px at 50% 0%, rgba(201,168,76,.08) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.noise {
+  position: fixed;
+  inset: 0;
+  opacity: .035;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  width: 100%;
+  max-width: 640px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Логотип */
+.logo {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 32px;
+  justify-content: center;
+}
+.logo-n {
+  font-family: 'PT Sans', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--gold);
+  font-style: italic;
+  line-height: 1;
+}
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  padding-top: 2px;
+}
+.logo-top { font-size: 9px; color: var(--gold); font-style: italic; letter-spacing: .3px; }
+.logo-bot {
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px;
+  color: var(--gold);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Экран */
+.screen { display: none; animation: fadeIn .4s ease; }
+.screen.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Стартовый экран */
+.start-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+.start-title span { color: var(--red); }
+.start-sub {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+.start-meta {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+.meta-item {
+  background: var(--gold-light);
+  border: 1px solid var(--gold-border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--gold);
+  text-align: center;
+  flex: 1;
+}
+.meta-item strong { display: block; font-size: 18px; font-family: 'Oswald', sans-serif; }
+
+/* Прогресс */
+.progress-wrap { margin-bottom: 24px; }
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.progress-bar {
+  height: 3px;
+  background: rgba(255,255,255,.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  transition: width .4s ease;
+}
+
+/* Вопрос */
+.q-num {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px;
+  color: var(--gold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.q-text {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 24px;
+}
+
+/* Варианты */
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all .2s ease;
+  text-align: left;
+  line-height: 1.4;
+  position: relative;
+  overflow: hidden;
+}
+.option::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  opacity: 0;
+  transition: opacity .2s;
+}
+.option:hover {
+  border-color: var(--gold-border);
+  background: var(--gold-light);
+}
+.option.selected {
+  border-color: var(--gold);
+  background: var(--gold-light);
+}
+.option-letter {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  background: rgba(201,168,76,.2);
+  border-radius: 50%;
+  text-align: center;
+  line-height: 22px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-right: 10px;
+  flex-shrink: 0;
+  font-family: 'Oswald', sans-serif;
+}
+.option-inner { display: flex; align-items: center; }
+
+/* Кнопки */
+.btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  background: var(--gold);
+  color: #111;
+  font-family: 'Oswald', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .2s ease;
+  margin-top: 24px;
+}
+.btn:hover { background: #d4b05a; transform: translateY(-1px); }
+.btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+.btn-outline {
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--gold-border);
+  margin-top: 12px;
+}
+.btn-outline:hover { background: var(--gold-light); }
+
+/* Результат */
+.result-badge {
+  display: inline-block;
+  background: var(--gold-light);
+  border: 1px solid var(--gold-border);
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: 'Oswald', sans-serif;
+  margin-bottom: 16px;
+}
+.result-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(38px, 5vw, 56px);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+.result-title .level-observer { color: #78909C; }
+.result-title .level-practitioner { color: var(--gold); }
+.result-title .level-strategist { color: #43A047; }
+
+.result-divider {
+  height: 1px;
+  background: rgba(201,168,76,.25);
+  margin: 20px 0;
+}
+.result-text {
+  font-size: 15px;
+  color: rgba(255,255,255,.87);
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+.result-card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 16px 18px;
+  color: #1a1a1a;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+.result-card strong { color: #111; }
+.code-word {
+  background: var(--gold-light);
+  border: 1px solid var(--gold-border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--gold);
+  line-height: 1.6;
+  text-align: center;
+}
+.code-word .code {
+  font-family: 'Oswald', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  display: block;
+  margin-top: 4px;
+}
+
+.divider { height: 1px; background: rgba(255,255,255,.08); margin: 20px 0; }
+</style>
+</head>
+<body>
+
+<canvas class="noise" id="noiseCanvas"></canvas>
+
+<div class="container">
+  <div class="logo">
+    <div class="logo-n">𝒩</div>
+    <div class="logo-text">
+      <span class="logo-top">ейро</span>
+      <span class="logo-bot">навигатор</span>
+    </div>
+  </div>
+
+  <!-- СТАРТ -->
+  <div class="screen active" id="screen-start">
+    <div class="start-title">Какой у тебя<br>уровень работы<br>с <span>ИИ?</span></div>
+    <p class="start-sub">5 вопросов — и ты узнаешь где находишься сейчас, и что делать дальше чтобы ИИ реально работал на твой бизнес.</p>
+    <div class="start-meta">
+      <div class="meta-item"><strong>5</strong>вопросов</div>
+      <div class="meta-item"><strong>3</strong>уровня</div>
+      <div class="meta-item"><strong>2 мин</strong>времени</div>
+    </div>
+    <button class="btn" onclick="startQuiz()">Начать тест →</button>
+  </div>
+
+  <!-- ВОПРОСЫ -->
+  <div class="screen" id="screen-quiz">
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Вопрос <span id="q-current">1</span> из 5</span>
+        <span id="q-percent">20%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:20%"></div></div>
+    </div>
+    <div class="q-num" id="q-num">Вопрос 01</div>
+    <div class="q-text" id="q-text"></div>
+    <div class="options" id="options"></div>
+    <button class="btn" id="btn-next" disabled onclick="nextQuestion()">Далее →</button>
+  </div>
+
+  <!-- РЕЗУЛЬТАТ -->
+  <div class="screen" id="screen-result">
+    <div class="result-badge">Твой результат</div>
+    <div class="result-title" id="result-title"></div>
+    <div class="result-divider"></div>
+    <div class="result-text" id="result-text"></div>
+    <div class="result-card" id="result-card"></div>
+    <div class="code-word" id="code-word"></div>
+    <a class="btn" id="result-btn" href="" target="_blank">Написать Ольге →</a>
+    <button class="btn btn-outline" onclick="restartQuiz()">Пройти ещё раз</button>
+  </div>
+</div>
+
+<script>
+// Шум
+(function(){
+  const c = document.getElementById('noiseCanvas');
+  c.width = 200; c.height = 200;
+  const ctx = c.getContext('2d');
+  const img = ctx.createImageData(200,200);
+  let s = 42;
+  function rand(){ s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; }
+  for(let i=0;i<img.data.length;i+=4){
+    const v=Math.floor(rand()*255);
+    img.data[i]=v;img.data[i+1]=v;img.data[i+2]=v;img.data[i+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+  c.style.backgroundImage='url('+c.toDataURL()+')';
+  c.style.backgroundSize='200px';
+  c.style.width='100%'; c.style.height='100%';
+})();
+
+const questions = [
+  {
+    text: "Как ты используешь ChatGPT?",
+    options: [
+      "Никак, только слышала",
+      "Иногда прошу написать пост",
+      "Использую регулярно с промптами",
+      "Настроила под свои задачи"
+    ],
+    scores: [0, 1, 2, 3]
+  },
+  {
+    text: "Сколько времени в день тратишь на рутину — посты, ответы, планирование?",
+    options: [
+      "Больше 3 часов",
+      "1–3 часа",
+      "Меньше часа, ИИ помогает",
+      "Почти не трачу, всё автоматизировано"
+    ],
+    scores: [0, 1, 2, 3]
+  },
+  {
+    text: "Есть ли у тебя система контент-плана?",
+    options: [
+      "Пишу когда придёт вдохновение",
+      "Примерно понимаю о чём пишу",
+      "Есть план, но не всегда следую",
+      "Есть чёткая система с рубриками"
+    ],
+    scores: [0, 1, 2, 3]
+  },
+  {
+    text: "Пробовала ли ты GPT-ассистентов под свою нишу?",
+    options: [
+      "Не знаю что это",
+      "Слышала, но не пробовала",
+      "Пробовала стандартные",
+      "Есть настроенные под мои задачи"
+    ],
+    scores: [0, 1, 2, 3]
+  },
+  {
+    text: "Как ты относишься к ИИ в бизнесе?",
+    options: [
+      "Боюсь, что заменит людей",
+      "Интересно, но не знаю с чего начать",
+      "Использую как инструмент",
+      "Строю на нём систему работы"
+    ],
+    scores: [0, 1, 2, 3]
+  }
+];
+
+const results = {
+  observer: {
+    title: '<span class="level-observer">Наблюдатель</span>',
+    text: "Ты на старте — и это хорошее место, потому что 84% экспертов ещё не начали. Первый шаг не такой страшный, как кажется.",
+    card: "Приходи на бесплатный разбор с ИИ-ассистентом — разберём с чего именно тебе начать, без лишнего и сложного. За подписку на канал.",
+    code: "НАБЛЮДАТЕЛЬ",
+    color: "#78909C"
+  },
+  practitioner: {
+    title: '<span class="level-practitioner">Практик</span>',
+    text: "Ты уже делаешь больше большинства — но ИИ у тебя работает вхолостую, потому что нет системы. Час в правильном направлении даст больше чем неделя хаотичных попыток.",
+    card: "На разборе с ИИ-ассистентом выстроим конкретный план под твою нишу и задачи. Бесплатно — за подписку на канал.",
+    code: "ПРАКТИК",
+    color: "#C9A84C"
+  },
+  strategist: {
+    title: '<span class="level-strategist">Стратег</span>',
+    text: "Ты понимаешь ценность инструмента — осталось собрать всё в систему которая работает без тебя.",
+    card: "Запишись на платный разбор за 4 990 ₽ — посмотрим где у тебя узкие места, проведём анализ каналов и выстроим систему автоматизации.",
+    code: "СТРАТЕГ",
+    color: "#43A047"
+  }
+};
+
+let currentQ = 0;
+let answers = [];
+let selectedOption = null;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startQuiz() {
+  currentQ = 0;
+  answers = [];
+  showQuestion();
+  showScreen('screen-quiz');
+}
+
+function showQuestion() {
+  const q = questions[currentQ];
+  const pct = Math.round(((currentQ+1)/5)*100);
+  document.getElementById('q-current').textContent = currentQ+1;
+  document.getElementById('q-percent').textContent = pct+'%';
+  document.getElementById('progress-fill').style.width = pct+'%';
+  document.getElementById('q-num').textContent = 'Вопрос '+(currentQ+1<10?'0':'')+(currentQ+1);
+  document.getElementById('q-text').textContent = q.text;
+  selectedOption = null;
+  document.getElementById('btn-next').disabled = true;
+
+  const letters = ['А','Б','В','Г'];
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.innerHTML = `<div class="option-inner"><span class="option-letter">${letters[i]}</span>${opt}</div>`;
+    btn.onclick = () => selectOption(i, btn);
+    opts.appendChild(btn);
+  });
+}
+
+function selectOption(idx, btn) {
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedOption = idx;
+  document.getElementById('btn-next').disabled = false;
+}
+
+function nextQuestion() {
+  if(selectedOption === null) return;
+  answers.push(questions[currentQ].scores[selectedOption]);
+  currentQ++;
+  if(currentQ < questions.length) {
+    showQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  const total = answers.reduce((a,b) => a+b, 0);
+  let level;
+  if(total <= 4) level = 'observer';
+  else if(total <= 9) level = 'practitioner';
+  else level = 'strategist';
+
+  const r = results[level];
+  document.getElementById('result-title').innerHTML = r.title;
+  document.getElementById('result-text').textContent = r.text;
+  document.getElementById('result-card').textContent = r.card;
+  document.getElementById('code-word').innerHTML = `Подпишись на канал <strong>@proneyrosmm</strong> и напиши Ольге кодовое слово:<span class="code">${r.code}</span>`;
+  document.getElementById('result-btn').href = 'https://t.me/matveevaolgapro';
+  showScreen('screen-result');
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  answers = [];
+  selectedOption = null;
+  showScreen('screen-start');
+}
+</script>
+</body>
+</html>
